@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":[["plonk_verifier","Circuits implementation Circuits for Plonk verifiers."],["transcript","Implementing native circuit for rescue transcript"]]};

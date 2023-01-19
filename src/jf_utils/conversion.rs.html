@@ -1,0 +1,326 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `utilities/src/conversion.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>conversion.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../normalize.css"><link rel="stylesheet" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../ayu.css" disabled><link rel="stylesheet" href="../../dark.css" disabled><link rel="stylesheet" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script><script defer src="../../main.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../jf_utils/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
+// This file is part of the Jellyfish library.
+
+// You should have received a copy of the MIT License
+// along with the Jellyfish library. If not, see &lt;https://mit-license.org/&gt;.
+
+</span><span class="kw">use </span>ark_ec::ModelParameters;
+<span class="kw">use </span>ark_ff::{BigInteger, PrimeField};
+<span class="kw">use </span>ark_std::{cmp::min, vec::Vec};
+<span class="kw">use </span>sha2::{Digest, Sha512};
+
+<span class="doccomment">/// Convert a scalar field element to a base field element.
+/// Mod reduction is not performed since the conversion occurs
+/// for fields on a same curve.
+</span><span class="kw">pub fn </span>fr_to_fq&lt;F, P&gt;(scalar: <span class="kw-2">&amp;</span>P::ScalarField) -&gt; F
+<span class="kw">where
+    </span>F: PrimeField,
+    P: ModelParameters&lt;BaseField = F&gt;,
+{
+    <span class="comment">// sanity checks:
+    // ensure | jubjub scalar field | &lt;= | BLS Scalar field |
+    // jubjub scalar field:
+    // 6554484396890773809930967563523245729705921265872317281365359162392183254199
+    // BLS12-381 scalar field:
+    // 52435875175126190479447740508185965837690552500527637822603658699938581184513
+    // jubjub377 scalar field:
+    // 2111115437357092606062206234695386632838870926408408195193685246394721360383
+    // BLS12-377 scalar field:
+    // 8444461749428370424248824938781546531375899335154063827935233455917409239041
+    </span>F::from_le_bytes_mod_order(<span class="kw-2">&amp;</span>scalar.into_repr().to_bytes_le())
+}
+
+<span class="doccomment">/// Convert a base field element to a scalar field element.
+/// Perform a mod reduction if the base field element is greater than
+/// the modulus of the scalar field.
+</span><span class="kw">pub fn </span>fq_to_fr&lt;F, P&gt;(base: <span class="kw-2">&amp;</span>F) -&gt; P::ScalarField
+<span class="kw">where
+    </span>F: PrimeField,
+    P: ModelParameters&lt;BaseField = F&gt;,
+{
+    P::ScalarField::from_le_bytes_mod_order(<span class="kw-2">&amp;</span>base.into_repr().to_bytes_le())
+}
+
+<span class="doccomment">/// Convert a field element in F(rom) to a field element in T(o),
+/// with |T| &lt; |F|; truncating the element via masking the top
+/// F::size_in_bits() - T::size_in_bits() with 0s
+</span><span class="kw">pub fn </span>fq_to_fr_with_mask&lt;F, T&gt;(base: <span class="kw-2">&amp;</span>F) -&gt; T
+<span class="kw">where
+    </span>F: PrimeField,
+    T: PrimeField,
+{
+    <span class="macro">assert!</span>(T::size_in_bits() &lt; F::size_in_bits());
+    <span class="kw">let </span>length = T::size_in_bits() &gt;&gt; <span class="number">3</span>;
+    <span class="comment">// ensure that no mod reduction happened
+    </span>T::from_le_bytes_mod_order(<span class="kw-2">&amp;</span>base.into_repr().to_bytes_le()[<span class="number">0</span>..length])
+}
+
+<span class="comment">// convert a field element in F(rom)
+// to a field element in T(o).
+// return an error if a mod reduction occurs.
+</span><span class="attribute">#[inline]
+</span><span class="kw">pub fn </span>field_switching&lt;F, T&gt;(base: <span class="kw-2">&amp;</span>F) -&gt; T
+<span class="kw">where
+    </span>F: PrimeField,
+    T: PrimeField,
+{
+    <span class="kw">let </span>bytes = base.into_repr().to_bytes_le();
+    <span class="kw">let </span>t = T::from_le_bytes_mod_order(<span class="kw-2">&amp;</span>bytes);
+
+    <span class="comment">// check t == base
+    // i.e., t did not overflow the target field
+    </span><span class="kw">let </span>bytes_rec = t.into_repr().to_bytes_le();
+    <span class="kw">let </span>length = min(bytes.len(), bytes_rec.len());
+    <span class="macro">assert_eq!</span>(bytes_rec[<span class="number">0</span>..length], bytes[<span class="number">0</span>..length],);
+    t
+}
+
+<span class="doccomment">/// Hash a sequence of bytes to into a field
+/// element, whose order is less than 256 bits.
+</span><span class="kw">pub fn </span>hash_to_field&lt;B, F&gt;(bytes: B) -&gt; F
+<span class="kw">where
+    </span>B: AsRef&lt;[u8]&gt;,
+    F: PrimeField,
+{
+    <span class="comment">// we extract a random `rand_byte_len` bytes from the hash
+    // the compute res = OS2IP(output) mod p
+    // which is less than 2^-128 from uniform
+    </span><span class="kw">let </span>rand_byte_len = (F::size_in_bits() + <span class="number">7</span>) / <span class="number">8 </span>+ <span class="number">128 </span>/ <span class="number">8</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha512::default();
+    hasher.update(bytes.as_ref());
+    <span class="kw">let </span>output = <span class="kw-2">&amp;</span>hasher.finalize()[<span class="number">0</span>..rand_byte_len];
+
+    F::from_le_bytes_mod_order(output)
+}
+
+<span class="doccomment">/// One-way, deterministic, infallible conversion between arbitrary bytes (of
+/// unknown length and potentially non-canonical) to field elements.
+/// This function converts bytes to vector of BaseField.
+</span><span class="kw">pub fn </span>bytes_to_field_elements&lt;B, F&gt;(bytes: B) -&gt; Vec&lt;F&gt;
+<span class="kw">where
+    </span>B: AsRef&lt;[u8]&gt; + Clone,
+    F: PrimeField,
+{
+    <span class="comment">// segment the bytes into chunks of bytes, each chunk is of size
+    // that is floor(F::size_in_bits/8). then, cast each chunk
+    // into F via F::from_le_bytes_mod_order
+    // note that mod_reduction is guaranteed to not occur
+
+    // Field order is never a multiple of 8
+    </span><span class="kw">let </span>chunk_length = F::size_in_bits() / <span class="number">8</span>;
+
+    <span class="comment">// pad the input to a multiple of chunk_length
+    </span><span class="kw">let </span>padded_length = (bytes.as_ref().len() + chunk_length - <span class="number">1</span>) / chunk_length * chunk_length;
+    <span class="kw">let </span><span class="kw-2">mut </span>padded_bytes: Vec&lt;u8&gt; = bytes.as_ref().to_vec();
+    padded_bytes.resize(padded_length, <span class="number">0u8</span>);
+    <span class="macro">assert!</span>(padded_bytes.len() % chunk_length == <span class="number">0</span>);
+
+    <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::new();
+    <span class="kw">for </span>chunk <span class="kw">in </span>padded_bytes.chunks(chunk_length) {
+        result.push(F::from_le_bytes_mod_order(chunk));
+    }
+    result
+}
+
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>ark_ed_on_bls12_377::{EdwardsParameters <span class="kw">as </span>Param377, Fr <span class="kw">as </span>Fr377};
+    <span class="kw">use </span>ark_ed_on_bls12_381::{EdwardsParameters <span class="kw">as </span>Param381, Fr <span class="kw">as </span>Fr381};
+    <span class="kw">use </span>ark_ed_on_bn254::{EdwardsParameters <span class="kw">as </span>Param254, Fr <span class="kw">as </span>Fr254};
+    <span class="kw">use </span>ark_std::UniformRand;
+
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_bn254_scalar_conversion() {
+        <span class="kw">let </span><span class="kw-2">mut </span>rng = ark_std::test_rng();
+        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">6 </span>{
+            <span class="kw">let </span>jj = Fr254::rand(<span class="kw-2">&amp;mut </span>rng);
+            <span class="kw">let </span>jj_bls = fr_to_fq::&lt;<span class="kw">_</span>, Param254&gt;(<span class="kw-2">&amp;</span>jj);
+            <span class="macro">assert!</span>(jj.into_repr() == jj_bls.into_repr());
+        }
+    }
+
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_jubjub_bls_scalar_conversion_377() {
+        <span class="kw">let </span><span class="kw-2">mut </span>rng = ark_std::test_rng();
+        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">6 </span>{
+            <span class="kw">let </span>jj = Fr377::rand(<span class="kw-2">&amp;mut </span>rng);
+            <span class="kw">let </span>jj_bls = fr_to_fq::&lt;<span class="kw">_</span>, Param377&gt;(<span class="kw-2">&amp;</span>jj);
+            <span class="macro">assert!</span>(jj.into_repr() == jj_bls.into_repr());
+        }
+    }
+
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_jubjub_bls_scalar_conversion_381() {
+        <span class="kw">let </span><span class="kw-2">mut </span>rng = ark_std::test_rng();
+        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">6 </span>{
+            <span class="kw">let </span>jj = Fr381::rand(<span class="kw-2">&amp;mut </span>rng);
+            <span class="kw">let </span>jj_bls = fr_to_fq::&lt;<span class="kw">_</span>, Param381&gt;(<span class="kw-2">&amp;</span>jj);
+            <span class="macro">assert!</span>(jj.into_repr() == jj_bls.into_repr());
+        }
+    }
+}
+</code></pre></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="jf_utils" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

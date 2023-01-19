@@ -1,0 +1,998 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `primitives/src/pcs/multilinear_kzg/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" href="../../../../normalize.css"><link rel="stylesheet" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" href="../../../../ayu.css" disabled><link rel="stylesheet" href="../../../../dark.css" disabled><link rel="stylesheet" href="../../../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../../../storage.js"></script><script defer src="../../../../source-script.js"></script><script defer src="../../../../source-files.js"></script><script defer src="../../../../main.js"></script><noscript><link rel="stylesheet" href="../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../../../jf_primitives/index.html"><img class="rust-logo" src="../../../../rust-logo.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../wheel.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+<span id="8">8</span>
+<span id="9">9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
+<span id="100">100</span>
+<span id="101">101</span>
+<span id="102">102</span>
+<span id="103">103</span>
+<span id="104">104</span>
+<span id="105">105</span>
+<span id="106">106</span>
+<span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
+<span id="118">118</span>
+<span id="119">119</span>
+<span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
+<span id="124">124</span>
+<span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
+<span id="249">249</span>
+<span id="250">250</span>
+<span id="251">251</span>
+<span id="252">252</span>
+<span id="253">253</span>
+<span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
+<span id="277">277</span>
+<span id="278">278</span>
+<span id="279">279</span>
+<span id="280">280</span>
+<span id="281">281</span>
+<span id="282">282</span>
+<span id="283">283</span>
+<span id="284">284</span>
+<span id="285">285</span>
+<span id="286">286</span>
+<span id="287">287</span>
+<span id="288">288</span>
+<span id="289">289</span>
+<span id="290">290</span>
+<span id="291">291</span>
+<span id="292">292</span>
+<span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+</pre><pre class="rust"><code><span class="comment">// Copyright (c) 2022 Espresso Systems (espressosys.com)
+// This file is part of the Jellyfish library.
+
+// You should have received a copy of the MIT License
+// along with the Jellyfish library. If not, see &lt;https://mit-license.org/&gt;.
+
+</span><span class="doccomment">//! Main module for multilinear KZG commitment scheme
+
+</span><span class="kw">mod </span>batching;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>srs;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>util;
+
+<span class="kw">use </span><span class="kw">crate</span>::pcs::{
+    prelude::{
+        Commitment, UnivariateProverParam, UnivariateUniversalParams, UnivariateVerifierParam,
+    },
+    univariate_kzg::UnivariateKzgProof,
+    PCSError, PolynomialCommitmentScheme, StructuredReferenceString,
+};
+<span class="kw">use </span>ark_ec::{
+    msm::{FixedBaseMSM, VariableBaseMSM},
+    AffineCurve, PairingEngine, ProjectiveCurve,
+};
+<span class="kw">use </span>ark_ff::PrimeField;
+<span class="kw">use </span>ark_poly::{DenseMultilinearExtension, MultilinearExtension};
+<span class="kw">use </span>ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Read, SerializationError, Write};
+<span class="kw">use </span>ark_std::{
+    borrow::Borrow,
+    end_timer, format,
+    marker::PhantomData,
+    rand::{CryptoRng, RngCore},
+    rc::Rc,
+    start_timer,
+    string::ToString,
+    vec,
+    vec::Vec,
+    One, Zero,
+};
+<span class="kw">use </span>batching::{batch_open_internal, batch_verify_internal};
+<span class="kw">use </span>srs::{MultilinearProverParam, MultilinearUniversalParams, MultilinearVerifierParam};
+<span class="kw">use </span>util::merge_polynomials;
+
+<span class="doccomment">/// KZG Polynomial Commitment Scheme on multilinear polynomials.
+</span><span class="kw">pub struct </span>MultilinearKzgPCS&lt;E: PairingEngine&gt; {
+    <span class="attribute">#[doc(hidden)]
+    </span>phantom: PhantomData&lt;E&gt;,
+}
+
+<span class="attribute">#[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug, PartialEq, Eq)]
+</span><span class="doccomment">/// proof of opening
+</span><span class="kw">pub struct </span>MultilinearKzgProof&lt;E: PairingEngine&gt; {
+    <span class="doccomment">/// Evaluation of quotients
+    </span><span class="kw">pub </span>proofs: Vec&lt;E::G1Affine&gt;,
+}
+
+<span class="attribute">#[derive(CanonicalSerialize, CanonicalDeserialize, Clone, Debug, PartialEq, Eq)]
+</span><span class="doccomment">/// proof of batch opening
+</span><span class="kw">pub struct </span>MultilinearKzgBatchProof&lt;E: PairingEngine&gt; {
+    <span class="doccomment">/// The actual proof
+    </span><span class="kw">pub </span>proof: MultilinearKzgProof&lt;E&gt;,
+    <span class="doccomment">/// Commitment to q(x):= w(l(x)) where
+    /// - `w` is the merged MLE
+    /// - `l` is the list of univariate polys that goes through all points
+    </span><span class="kw">pub </span>q_x_commit: Commitment&lt;E&gt;,
+    <span class="doccomment">/// openings of q(x) at 1, omega, ..., and r
+    </span><span class="kw">pub </span>q_x_opens: Vec&lt;UnivariateKzgProof&lt;E&gt;&gt;,
+}
+
+<span class="kw">impl</span>&lt;E: PairingEngine&gt; PolynomialCommitmentScheme&lt;E&gt; <span class="kw">for </span>MultilinearKzgPCS&lt;E&gt; {
+    <span class="comment">// Parameters
+    </span><span class="kw">type </span>ProverParam = (
+        MultilinearProverParam&lt;E&gt;,
+        UnivariateProverParam&lt;E::G1Affine&gt;,
+    );
+    <span class="kw">type </span>VerifierParam = (MultilinearVerifierParam&lt;E&gt;, UnivariateVerifierParam&lt;E&gt;);
+    <span class="kw">type </span>SRS = (MultilinearUniversalParams&lt;E&gt;, UnivariateUniversalParams&lt;E&gt;);
+    <span class="comment">// Polynomial and its associated types
+    </span><span class="kw">type </span>Polynomial = Rc&lt;DenseMultilinearExtension&lt;E::Fr&gt;&gt;;
+    <span class="kw">type </span>Point = Vec&lt;E::Fr&gt;;
+    <span class="kw">type </span>Evaluation = E::Fr;
+    <span class="comment">// Commitments and proofs
+    </span><span class="kw">type </span>Commitment = Commitment&lt;E&gt;;
+    <span class="kw">type </span>BatchCommitment = Commitment&lt;E&gt;;
+    <span class="kw">type </span>Proof = MultilinearKzgProof&lt;E&gt;;
+    <span class="kw">type </span>BatchProof = MultilinearKzgBatchProof&lt;E&gt;;
+
+    <span class="doccomment">/// Build SRS for testing.
+    ///
+    /// - For univariate polynomials, `log_size` is the log of maximum degree.
+    /// - For multilinear polynomials, `log_size` is the number of variables.
+    ///
+    /// WARNING: THIS FUNCTION IS FOR TESTING PURPOSE ONLY.
+    /// THE OUTPUT SRS SHOULD NOT BE USED IN PRODUCTION.
+    </span><span class="kw">fn </span>gen_srs_for_testing&lt;R: RngCore + CryptoRng&gt;(
+        rng: <span class="kw-2">&amp;mut </span>R,
+        log_size: usize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::SRS, PCSError&gt; {
+        <span class="prelude-val">Ok</span>((
+            MultilinearUniversalParams::&lt;E&gt;::gen_srs_for_testing(rng, log_size)<span class="question-mark">?</span>,
+            UnivariateUniversalParams::&lt;E&gt;::gen_srs_for_testing(rng, log_size)<span class="question-mark">?</span>,
+        ))
+    }
+
+    <span class="doccomment">/// Trim the universal parameters to specialize the public parameters.
+    /// Input both `supported_log_degree` for univariate and
+    /// `supported_num_vars` for multilinear.
+    </span><span class="kw">fn </span>trim(
+        srs: <span class="kw">impl </span>Borrow&lt;<span class="self">Self</span>::SRS&gt;,
+        supported_log_degree: usize,
+        supported_num_vars: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>::ProverParam, <span class="self">Self</span>::VerifierParam), PCSError&gt; {
+        <span class="kw">let </span>supported_num_vars = <span class="kw">match </span>supported_num_vars {
+            <span class="prelude-val">Some</span>(p) =&gt; p,
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(PCSError::InvalidParameters(
+                    <span class="string">&quot;multilinear should receive a num_var param&quot;</span>.to_string(),
+                ))
+            },
+        };
+        <span class="kw">let </span>(uni_ck, uni_vk) = srs.borrow().<span class="number">1</span>.trim(supported_log_degree)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(ml_ck, ml_vk) = srs.borrow().<span class="number">0</span>.trim(supported_num_vars)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(((ml_ck, uni_ck), (ml_vk, uni_vk)))
+    }
+
+    <span class="doccomment">/// Generate a commitment for a polynomial.
+    ///
+    /// This function takes `2^num_vars` number of scalar multiplications over
+    /// G1.
+    </span><span class="kw">fn </span>commit(
+        prover_param: <span class="kw">impl </span>Borrow&lt;<span class="self">Self</span>::ProverParam&gt;,
+        poly: <span class="kw-2">&amp;</span><span class="self">Self</span>::Polynomial,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Commitment, PCSError&gt; {
+        <span class="kw">let </span>prover_param = prover_param.borrow();
+        <span class="kw">let </span>commit_timer = <span class="macro">start_timer!</span>(|| <span class="string">&quot;commit&quot;</span>);
+        <span class="kw">if </span>prover_param.<span class="number">0</span>.num_vars &lt; poly.num_vars {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(PCSError::InvalidParameters(<span class="macro">format!</span>(
+                <span class="string">&quot;Poly length ({}) exceeds param limit ({})&quot;</span>,
+                poly.num_vars, prover_param.<span class="number">0</span>.num_vars
+            )));
+        }
+        <span class="kw">let </span>ignored = prover_param.<span class="number">0</span>.num_vars - poly.num_vars;
+        <span class="kw">let </span>scalars: Vec&lt;<span class="kw">_</span>&gt; = poly
+            .to_evaluations()
+            .into_iter()
+            .map(|x| x.into_repr())
+            .collect();
+        <span class="kw">let </span>commitment = VariableBaseMSM::multi_scalar_mul(
+            <span class="kw-2">&amp;</span>prover_param.<span class="number">0</span>.powers_of_g[ignored].evals,
+            scalars.as_slice(),
+        )
+        .into_affine();
+
+        <span class="macro">end_timer!</span>(commit_timer);
+        <span class="prelude-val">Ok</span>(Commitment(commitment))
+    }
+
+    <span class="doccomment">/// Batch commit a list of polynomials.
+    ///
+    /// This function takes `2^(num_vars + log(polys.len())` number of scalar
+    /// multiplications over G1.
+    </span><span class="kw">fn </span>batch_commit(
+        prover_param: <span class="kw">impl </span>Borrow&lt;<span class="self">Self</span>::ProverParam&gt;,
+        polys: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Polynomial],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Commitment, PCSError&gt; {
+        <span class="kw">let </span>prover_param = prover_param.borrow();
+        <span class="kw">let </span>commit_timer = <span class="macro">start_timer!</span>(|| <span class="string">&quot;multi commit&quot;</span>);
+        <span class="kw">let </span>poly = merge_polynomials(polys)<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>scalars: Vec&lt;<span class="kw">_</span>&gt; = poly
+            .to_evaluations()
+            .iter()
+            .map(|x| x.into_repr())
+            .collect();
+
+        <span class="kw">let </span>commitment = VariableBaseMSM::multi_scalar_mul(
+            <span class="kw-2">&amp;</span>prover_param.<span class="number">0</span>.powers_of_g[<span class="number">0</span>].evals,
+            scalars.as_slice(),
+        )
+        .into_affine();
+
+        <span class="macro">end_timer!</span>(commit_timer);
+        <span class="prelude-val">Ok</span>(Commitment(commitment))
+    }
+
+    <span class="doccomment">/// On input a polynomial `p` and a point `point`, outputs a proof for the
+    /// same. This function does not need to take the evaluation value as an
+    /// input.
+    ///
+    /// This function takes 2^{num_var +1} number of scalar multiplications over
+    /// G1:
+    /// - it prodceeds with `num_var` number of rounds,
+    /// - at round i, we compute an MSM for `2^{num_var - i + 1}` number of G2
+    ///   elements.
+    </span><span class="kw">fn </span>open(
+        prover_param: <span class="kw">impl </span>Borrow&lt;<span class="self">Self</span>::ProverParam&gt;,
+        polynomial: <span class="kw-2">&amp;</span><span class="self">Self</span>::Polynomial,
+        point: <span class="kw-2">&amp;</span><span class="self">Self</span>::Point,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>::Proof, <span class="self">Self</span>::Evaluation), PCSError&gt; {
+        open_internal(<span class="kw-2">&amp;</span>prover_param.borrow().<span class="number">0</span>, polynomial, point)
+    }
+
+    <span class="doccomment">/// Input
+    /// - the prover parameters for univariate KZG,
+    /// - the prover parameters for multilinear KZG,
+    /// - a list of polynomials,
+    /// - a (batch) commitment to all polynomials,
+    /// - and a same number of points,
+    /// compute a batch opening for all the polynomials.
+    ///
+    /// For simplicity, this API requires each MLE to have only one point. If
+    /// the caller wish to use more than one points per MLE, it should be
+    /// handled at the caller layer.
+    ///
+    /// Returns an error if the lengths do not match.
+    ///
+    /// Returns the proof, consists of
+    /// - the multilinear KZG opening
+    /// - the univariate KZG commitment to q(x)
+    /// - the openings and evaluations of q(x) at omega^i and r
+    ///
+    /// Steps:
+    /// 1. build `l(points)` which is a list of univariate polynomials that goes
+    /// through the points
+    /// 2. build MLE `w` which is the merge of all MLEs.
+    /// 3. build `q(x)` which is a univariate polynomial `W circ l`
+    /// 4. commit to q(x) and sample r from transcript
+    /// transcript contains: w commitment, points, q(x)&#39;s commitment
+    /// 5. build q(omega^i) and their openings
+    /// 6. build q(r) and its opening
+    /// 7. get a point `p := l(r)`
+    /// 8. output an opening of `w` over point `p`
+    /// 9. output `w(p)`
+    </span><span class="kw">fn </span>batch_open(
+        prover_param: <span class="kw">impl </span>Borrow&lt;<span class="self">Self</span>::ProverParam&gt;,
+        batch_commitment: <span class="kw-2">&amp;</span><span class="self">Self</span>::BatchCommitment,
+        polynomials: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Polynomial],
+        points: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Point],
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="self">Self</span>::BatchProof, Vec&lt;<span class="self">Self</span>::Evaluation&gt;), PCSError&gt; {
+        batch_open_internal::&lt;E&gt;(
+            <span class="kw-2">&amp;</span>prover_param.borrow().<span class="number">1</span>,
+            <span class="kw-2">&amp;</span>prover_param.borrow().<span class="number">0</span>,
+            polynomials,
+            batch_commitment,
+            points,
+        )
+    }
+
+    <span class="doccomment">/// Verifies that `value` is the evaluation at `x` of the polynomial
+    /// committed inside `comm`.
+    ///
+    /// This function takes
+    /// - num_var number of pairing product.
+    /// - num_var number of MSM
+    </span><span class="kw">fn </span>verify(
+        verifier_param: <span class="kw-2">&amp;</span><span class="self">Self</span>::VerifierParam,
+        commitment: <span class="kw-2">&amp;</span><span class="self">Self</span>::Commitment,
+        point: <span class="kw-2">&amp;</span><span class="self">Self</span>::Point,
+        value: <span class="kw-2">&amp;</span>E::Fr,
+        proof: <span class="kw-2">&amp;</span><span class="self">Self</span>::Proof,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, PCSError&gt; {
+        verify_internal(<span class="kw-2">&amp;</span>verifier_param.<span class="number">0</span>, commitment, point, value, proof)
+    }
+
+    <span class="doccomment">/// Verifies that `value` is the evaluation at `x_i` of the polynomial
+    /// `poly_i` committed inside `commitment`.
+    /// steps:
+    ///
+    /// 1. put `q(x)`&#39;s evaluations over `(1, omega,...)` into transcript
+    /// 2. sample `r` from transcript
+    /// 3. check `q(r) == value`
+    /// 4. build `l(points)` which is a list of univariate polynomials that goes
+    /// through the points
+    /// 5. get a point `p := l(r)`
+    /// 6. verifies `p` is verifies against proof
+    </span><span class="kw">fn </span>batch_verify&lt;R: RngCore + CryptoRng&gt;(
+        verifier_param: <span class="kw-2">&amp;</span><span class="self">Self</span>::VerifierParam,
+        batch_commitment: <span class="kw-2">&amp;</span><span class="self">Self</span>::BatchCommitment,
+        points: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Point],
+        values: <span class="kw-2">&amp;</span>[E::Fr],
+        batch_proof: <span class="kw-2">&amp;</span><span class="self">Self</span>::BatchProof,
+        _rng: <span class="kw-2">&amp;mut </span>R,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, PCSError&gt; {
+        batch_verify_internal(
+            <span class="kw-2">&amp;</span>verifier_param.<span class="number">1</span>,
+            <span class="kw-2">&amp;</span>verifier_param.<span class="number">0</span>,
+            batch_commitment,
+            points,
+            values,
+            batch_proof,
+        )
+    }
+}
+
+<span class="doccomment">/// On input a polynomial `p` and a point `point`, outputs a proof for the
+/// same. This function does not need to take the evaluation value as an
+/// input.
+///
+/// This function takes 2^{num_var} number of scalar multiplications over
+/// G1:
+/// - it proceeds with `num_var` number of rounds,
+/// - at round i, we compute an MSM for `2^{num_var - i}` number of G1 elements.
+</span><span class="kw">fn </span>open_internal&lt;E: PairingEngine&gt;(
+    prover_param: <span class="kw-2">&amp;</span>MultilinearProverParam&lt;E&gt;,
+    polynomial: <span class="kw-2">&amp;</span>DenseMultilinearExtension&lt;E::Fr&gt;,
+    point: <span class="kw-2">&amp;</span>[E::Fr],
+) -&gt; <span class="prelude-ty">Result</span>&lt;(MultilinearKzgProof&lt;E&gt;, E::Fr), PCSError&gt; {
+    <span class="kw">let </span>open_timer = <span class="macro">start_timer!</span>(|| <span class="macro">format!</span>(<span class="string">&quot;open mle with {} variable&quot;</span>, polynomial.num_vars));
+
+    <span class="kw">if </span>polynomial.num_vars() &gt; prover_param.num_vars {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(PCSError::InvalidParameters(<span class="macro">format!</span>(
+            <span class="string">&quot;Polynomial num_vars {} exceed the limit {}&quot;</span>,
+            polynomial.num_vars, prover_param.num_vars
+        )));
+    }
+
+    <span class="kw">if </span>polynomial.num_vars() != point.len() {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(PCSError::InvalidParameters(<span class="macro">format!</span>(
+            <span class="string">&quot;Polynomial num_vars {} does not match point len {}&quot;</span>,
+            polynomial.num_vars,
+            point.len()
+        )));
+    }
+
+    <span class="kw">let </span>nv = polynomial.num_vars();
+    <span class="comment">// the first `ignored` SRS vectors are unused
+    </span><span class="kw">let </span>ignored = prover_param.num_vars - nv + <span class="number">1</span>;
+
+    <span class="kw">let </span><span class="kw-2">mut </span>f = polynomial.to_evaluations();
+
+    <span class="kw">let </span><span class="kw-2">mut </span>proofs = Vec::new();
+
+    <span class="kw">for </span>(i, (<span class="kw-2">&amp;</span>point_at_k, gi)) <span class="kw">in </span>point
+        .iter()
+        .zip(prover_param.powers_of_g[ignored..ignored + nv].iter())
+        .enumerate()
+    {
+        <span class="kw">let </span>ith_round = <span class="macro">start_timer!</span>(|| <span class="macro">format!</span>(<span class="string">&quot;{}-th round&quot;</span>, i));
+
+        <span class="kw">let </span>k = nv - <span class="number">1 </span>- i;
+        <span class="kw">let </span>cur_dim = <span class="number">1 </span>&lt;&lt; k;
+        <span class="kw">let </span><span class="kw-2">mut </span>q = <span class="macro">vec!</span>[E::Fr::zero(); cur_dim];
+        <span class="kw">let </span><span class="kw-2">mut </span>r = <span class="macro">vec!</span>[E::Fr::zero(); cur_dim];
+
+        <span class="kw">let </span>ith_round_eval = <span class="macro">start_timer!</span>(|| <span class="macro">format!</span>(<span class="string">&quot;{}-th round eval&quot;</span>, i));
+        <span class="kw">for </span>b <span class="kw">in </span><span class="number">0</span>..(<span class="number">1 </span>&lt;&lt; k) {
+            <span class="comment">// q[b] = f[1, b] - f[0, b]
+            </span>q[b] = f[(b &lt;&lt; <span class="number">1</span>) + <span class="number">1</span>] - f[b &lt;&lt; <span class="number">1</span>];
+
+            <span class="comment">// r[b] = f[0, b] + q[b] * p
+            </span>r[b] = f[b &lt;&lt; <span class="number">1</span>] + (q[b] * point_at_k);
+        }
+        f = r;
+        <span class="macro">end_timer!</span>(ith_round_eval);
+        <span class="kw">let </span>scalars: Vec&lt;<span class="kw">_</span>&gt; = q.iter().map(|x| x.into_repr()).collect();
+
+        <span class="comment">// this is a MSM over G1 and is likely to be the bottleneck
+        </span><span class="kw">let </span>msm_timer = <span class="macro">start_timer!</span>(|| <span class="macro">format!</span>(<span class="string">&quot;msm of size {} at round {}&quot;</span>, gi.evals.len(), i));
+
+        proofs.push(VariableBaseMSM::multi_scalar_mul(<span class="kw-2">&amp;</span>gi.evals, <span class="kw-2">&amp;</span>scalars).into_affine());
+        <span class="macro">end_timer!</span>(msm_timer);
+
+        <span class="macro">end_timer!</span>(ith_round);
+    }
+    <span class="kw">let </span>eval = polynomial
+        .evaluate(point)
+        .ok_or_else(|| PCSError::InvalidParameters(<span class="string">&quot;fail to eval poly at the point&quot;</span>.to_string()))<span class="question-mark">?</span>;
+    <span class="macro">end_timer!</span>(open_timer);
+    <span class="prelude-val">Ok</span>((MultilinearKzgProof { proofs }, eval))
+}
+
+<span class="doccomment">/// Verifies that `value` is the evaluation at `x` of the polynomial
+/// committed inside `comm`.
+///
+/// This function takes
+/// - num_var number of pairing product.
+/// - num_var number of MSM
+</span><span class="kw">fn </span>verify_internal&lt;E: PairingEngine&gt;(
+    verifier_param: <span class="kw-2">&amp;</span>MultilinearVerifierParam&lt;E&gt;,
+    commitment: <span class="kw-2">&amp;</span>Commitment&lt;E&gt;,
+    point: <span class="kw-2">&amp;</span>[E::Fr],
+    value: <span class="kw-2">&amp;</span>E::Fr,
+    proof: <span class="kw-2">&amp;</span>MultilinearKzgProof&lt;E&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;bool, PCSError&gt; {
+    <span class="kw">let </span>verify_timer = <span class="macro">start_timer!</span>(|| <span class="string">&quot;verify&quot;</span>);
+    <span class="kw">let </span>num_var = point.len();
+
+    <span class="kw">if </span>num_var &gt; verifier_param.num_vars {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(PCSError::InvalidParameters(<span class="macro">format!</span>(
+            <span class="string">&quot;point length ({}) exceeds param limit ({})&quot;</span>,
+            num_var, verifier_param.num_vars
+        )));
+    }
+
+    <span class="kw">let </span>prepare_inputs_timer = <span class="macro">start_timer!</span>(|| <span class="string">&quot;prepare pairing inputs&quot;</span>);
+
+    <span class="kw">let </span>scalar_size = E::Fr::size_in_bits();
+    <span class="kw">let </span>window_size = FixedBaseMSM::get_mul_window_size(num_var);
+
+    <span class="kw">let </span>h_table = FixedBaseMSM::get_window_table(
+        scalar_size,
+        window_size,
+        verifier_param.h.into_projective(),
+    );
+    <span class="kw">let </span>h_mul: Vec&lt;E::G2Projective&gt; =
+        FixedBaseMSM::multi_scalar_mul(scalar_size, window_size, <span class="kw-2">&amp;</span>h_table, point);
+
+    <span class="comment">// the first `ignored` G2 parameters are unused
+    </span><span class="kw">let </span>ignored = verifier_param.num_vars - num_var;
+    <span class="kw">let </span>h_vec: Vec&lt;<span class="kw">_</span>&gt; = (<span class="number">0</span>..num_var)
+        .map(|i| verifier_param.h_mask[ignored + i].into_projective() - h_mul[i])
+        .collect();
+    <span class="kw">let </span>h_vec: Vec&lt;E::G2Affine&gt; = E::G2Projective::batch_normalization_into_affine(<span class="kw-2">&amp;</span>h_vec);
+    <span class="macro">end_timer!</span>(prepare_inputs_timer);
+
+    <span class="kw">let </span>pairing_product_timer = <span class="macro">start_timer!</span>(|| <span class="string">&quot;pairing product&quot;</span>);
+
+    <span class="kw">let </span><span class="kw-2">mut </span>pairings: Vec&lt;<span class="kw">_</span>&gt; = proof
+        .proofs
+        .iter()
+        .map(|<span class="kw-2">&amp;</span>x| E::G1Prepared::from(x))
+        .zip(h_vec.into_iter().take(num_var).map(E::G2Prepared::from))
+        .collect();
+
+    pairings.push((
+        E::G1Prepared::from(
+            (verifier_param.g.mul(<span class="kw-2">*</span>value) - commitment.<span class="number">0</span>.into_projective()).into_affine(),
+        ),
+        E::G2Prepared::from(verifier_param.h),
+    ));
+
+    <span class="kw">let </span>res = E::product_of_pairings(pairings.iter()) == E::Fqk::one();
+
+    <span class="macro">end_timer!</span>(pairing_product_timer);
+    <span class="macro">end_timer!</span>(verify_timer);
+    <span class="prelude-val">Ok</span>(res)
+}
+
+<span class="attribute">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>ark_bls12_381::Bls12_381;
+    <span class="kw">use </span>ark_ec::PairingEngine;
+    <span class="kw">use </span>ark_poly::{DenseMultilinearExtension, MultilinearExtension};
+    <span class="kw">use </span>ark_std::{rand::RngCore, test_rng, vec::Vec, UniformRand};
+    <span class="kw">type </span>E = Bls12_381;
+    <span class="kw">type </span>Fr = &lt;E <span class="kw">as </span>PairingEngine&gt;::Fr;
+
+    <span class="kw">fn </span>test_single_helper&lt;R: RngCore + CryptoRng&gt;(
+        params: <span class="kw-2">&amp;</span>(MultilinearUniversalParams&lt;E&gt;, UnivariateUniversalParams&lt;E&gt;),
+        poly: <span class="kw-2">&amp;</span>Rc&lt;DenseMultilinearExtension&lt;Fr&gt;&gt;,
+        rng: <span class="kw-2">&amp;mut </span>R,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), PCSError&gt; {
+        <span class="kw">let </span>nv = poly.num_vars();
+        <span class="macro">assert_ne!</span>(nv, <span class="number">0</span>);
+        <span class="kw">let </span>uni_degree = <span class="number">1</span>;
+        <span class="kw">let </span>(ck, vk) = MultilinearKzgPCS::trim(params, uni_degree, <span class="prelude-val">Some</span>(nv))<span class="question-mark">?</span>;
+        <span class="kw">let </span>point: Vec&lt;<span class="kw">_</span>&gt; = (<span class="number">0</span>..nv).map(|<span class="kw">_</span>| Fr::rand(rng)).collect();
+        <span class="kw">let </span>com = MultilinearKzgPCS::commit(<span class="kw-2">&amp;</span>ck, poly)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(proof, value) = MultilinearKzgPCS::open(<span class="kw-2">&amp;</span>ck, poly, <span class="kw-2">&amp;</span>point)<span class="question-mark">?</span>;
+
+        <span class="macro">assert!</span>(MultilinearKzgPCS::verify(
+            <span class="kw-2">&amp;</span>vk, <span class="kw-2">&amp;</span>com, <span class="kw-2">&amp;</span>point, <span class="kw-2">&amp;</span>value, <span class="kw-2">&amp;</span>proof
+        )<span class="question-mark">?</span>);
+
+        <span class="kw">let </span>value = Fr::rand(rng);
+        <span class="macro">assert!</span>(!MultilinearKzgPCS::verify(
+            <span class="kw-2">&amp;</span>vk, <span class="kw-2">&amp;</span>com, <span class="kw-2">&amp;</span>point, <span class="kw-2">&amp;</span>value, <span class="kw-2">&amp;</span>proof
+        )<span class="question-mark">?</span>);
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>test_single_commit() -&gt; <span class="prelude-ty">Result</span>&lt;(), PCSError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>rng = test_rng();
+
+        <span class="kw">let </span>params = MultilinearKzgPCS::&lt;E&gt;::gen_srs_for_testing(<span class="kw-2">&amp;mut </span>rng, <span class="number">10</span>)<span class="question-mark">?</span>;
+
+        <span class="comment">// normal polynomials
+        </span><span class="kw">let </span>poly1 = Rc::new(DenseMultilinearExtension::rand(<span class="number">8</span>, <span class="kw-2">&amp;mut </span>rng));
+        test_single_helper(<span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>poly1, <span class="kw-2">&amp;mut </span>rng)<span class="question-mark">?</span>;
+
+        <span class="comment">// single-variate polynomials
+        </span><span class="kw">let </span>poly2 = Rc::new(DenseMultilinearExtension::rand(<span class="number">1</span>, <span class="kw-2">&amp;mut </span>rng));
+        test_single_helper(<span class="kw-2">&amp;</span>params, <span class="kw-2">&amp;</span>poly2, <span class="kw-2">&amp;mut </span>rng)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="attribute">#[test]
+    </span><span class="kw">fn </span>setup_commit_verify_constant_polynomial() {
+        <span class="kw">let </span><span class="kw-2">mut </span>rng = test_rng();
+
+        <span class="comment">// normal polynomials
+        </span><span class="macro">assert!</span>(MultilinearKzgPCS::&lt;E&gt;::gen_srs_for_testing(<span class="kw-2">&amp;mut </span>rng, <span class="number">0</span>).is_err());
+    }
+}
+</code></pre></div>
+</section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-current-crate="jf_primitives" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.66.1 (90743e729 2023-01-10)" ></div></body></html>

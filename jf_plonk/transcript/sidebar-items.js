@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["RescueTranscript","Transcript with rescue hash function."],["SolidityTranscript","Transcript with `keccak256` hash function."],["StandardTranscript","A wrapper of `merlin::Transcript`."]],"trait":[["PlonkTranscript","Defines transcript APIs."]]};
